@@ -8,8 +8,9 @@ pubspec.lock
 # Rust
 target
 
-# Java
+# Java / Kotlin
 .settings
+*.jar
 
 # Other
 *.sqlite
