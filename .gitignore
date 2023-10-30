@@ -5,6 +5,9 @@ node_modules
 .dart_tool
 pubspec.lock
 
+# Rust
+target
+
 # Other
 *.sqlite
 *.sqlite3
