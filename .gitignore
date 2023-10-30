@@ -8,6 +8,9 @@ pubspec.lock
 # Rust
 target
 
+# Java
+.settings
+
 # Other
 *.sqlite
 *.sqlite3
