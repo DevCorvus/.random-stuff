@@ -4,3 +4,8 @@ node_modules
 # Dart
 .dart_tool
 pubspec.lock
+
+# Other
+*.sqlite
+*.sqlite3
+*.db
