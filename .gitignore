@@ -12,6 +12,10 @@ target
 .settings
 *.jar
 
+# Zig
+zig-cache
+zig-out
+
 # Other
 *.sqlite
 *.sqlite3
