@@ -16,6 +16,9 @@ target
 zig-cache
 zig-out
 
+# Elixir
+.elixir_ls
+
 # Other
 *.sqlite
 *.sqlite3
