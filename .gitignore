@@ -19,6 +19,9 @@ zig-out
 # Elixir
 .elixir_ls
 
+# Python
+venv
+
 # Other
 *.sqlite
 *.sqlite3
