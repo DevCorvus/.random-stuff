@@ -35,6 +35,22 @@ def sum_possible_with_memo(amount: int, numbers: List[int], memo) -> bool:
     return False
 
 
+def sum_possible_tabulation(amount: int, numbers: List[int]) -> bool:
+    table = []
+    for _ in range(amount + 1):
+        table.append(False)
+
+    table[0] = True
+
+    for i in range(amount):
+        if table[i] == True:
+            for number in numbers:
+                if (i + number) <= amount:
+                    table[i + number] = True
+
+    return table[len(table) - 1]
+
+
 amount = 5
 numbers = [2, 3]
 
@@ -44,4 +60,8 @@ print("took {:f} seconds".format(time.process_time() - t))
 
 t = time.process_time()
 print("Memoized:", sum_possible_with_memo(amount, numbers, {}))
+print("took {:f} seconds".format(time.process_time() - t))
+
+t = time.process_time()
+print("Tabulation:", sum_possible_tabulation(amount, numbers))
 print("took {:f} seconds".format(time.process_time() - t))
