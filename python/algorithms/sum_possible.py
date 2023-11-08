@@ -48,7 +48,7 @@ def sum_possible_tabulation(amount: int, numbers: List[int]) -> bool:
                 if (i + number) <= amount:
                     table[i + number] = True
 
-    return table[len(table) - 1]
+    return table[amount]
 
 
 amount = 5

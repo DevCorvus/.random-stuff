@@ -1,3 +1,4 @@
+from copy import deepcopy
 import time
 
 
@@ -32,7 +33,7 @@ def best_sum_with_memo(amount, numbers, memo={}):
     if amount < 0:
         return None
 
-    if memo.get(amount):
+    if amount in memo:
         return memo[amount]
 
     shortest_combination = None
@@ -42,7 +43,7 @@ def best_sum_with_memo(amount, numbers, memo={}):
         remainder_combination = best_sum_with_memo(remainder, numbers, memo)
 
         if remainder_combination != None:
-            remainder_combination.append(number)
+            remainder_combination = deepcopy(remainder_combination + [number])
 
             if not shortest_combination or len(remainder_combination) < len(
                 shortest_combination
