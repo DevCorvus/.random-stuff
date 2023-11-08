@@ -32,6 +32,26 @@ def can_construct_with_memo(target_word, word_bank, memo={}):
     return False
 
 
+def can_construct_tabulation(target_word, word_bank):
+    target_word_len = len(target_word)
+
+    table = []
+    for _ in range(target_word_len + 1):
+        table.append(False)
+
+    table[0] = True
+
+    for i in range(target_word_len):
+        if table[i] == True:
+            for word in word_bank:
+                word_len = len(word)
+
+                if target_word[i : i + word_len] == word:
+                    table[i + word_len] = True
+
+    return table[target_word_len]
+
+
 target_word = "fulano"
 word_bank = ["f", "u", "fu", "ful", "ano"]
 
@@ -42,4 +62,8 @@ print("took {:f} seconds".format(time.process_time() - t))
 
 t = time.process_time()
 print("Memoized:", can_construct_with_memo(target_word, word_bank))
+print("took {:f} seconds".format(time.process_time() - t))
+
+t = time.process_time()
+print("Tabulation:", can_construct_tabulation(target_word, word_bank))
 print("took {:f} seconds".format(time.process_time() - t))
