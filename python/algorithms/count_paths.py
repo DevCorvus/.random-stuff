@@ -46,6 +46,37 @@ def count_paths_math_alternative(y, x):
     )
 
 
+# Before it was grid_traveler
+def count_paths_tabulation(y, x):
+    if y == 0 or x == 0:
+        return 0
+
+    if y == 1 or x == 1:
+        return 1
+
+    grid = []
+    for _ in range(y + 1):
+        row = []
+        for _ in range(x + 1):
+            row.append(0)
+
+        grid.append(row)
+
+    grid[1][1] = 1
+
+    for i in range(y + 1):
+        for j in range(x + 1):
+            curr = grid[i][j]
+
+            if (i + 1) <= y:
+                grid[i + 1][j] += curr
+
+            if (j + 1) <= x:
+                grid[i][j + 1] += curr
+
+    return grid[y][x]
+
+
 grid = [
     [0, 0, 0],
     [0, 0, 0],
@@ -62,4 +93,8 @@ print("took {:f} seconds\n".format(time.process_time() - t))
 
 t = time.process_time()
 print("Alternative:", count_paths_math_alternative(len(grid), len(grid[0])))
+print("took {:f} seconds\n".format(time.process_time() - t))
+
+t = time.process_time()
+print("Tabulation:", count_paths_tabulation(len(grid), len(grid[0])))
 print("took {:f} seconds\n".format(time.process_time() - t))
