@@ -55,9 +55,7 @@ def best_sum_with_memo(amount, numbers, memo={}):
 
 
 def best_sum_tabulation(amount, numbers):
-    table = []
-    for _ in range(amount + 1):
-        table.append(None)
+    table = [None] * (amount + 1)
 
     table[0] = []
 

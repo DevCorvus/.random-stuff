@@ -35,9 +35,7 @@ def can_construct_with_memo(target_word, word_bank, memo={}):
 def can_construct_tabulation(target_word, word_bank):
     target_word_len = len(target_word)
 
-    table = []
-    for _ in range(target_word_len + 1):
-        table.append(False)
+    table = [False] * (target_word_len + 1)
 
     table[0] = True
 

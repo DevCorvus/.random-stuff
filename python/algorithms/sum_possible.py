@@ -36,9 +36,7 @@ def sum_possible_with_memo(amount: int, numbers: List[int], memo) -> bool:
 
 
 def sum_possible_tabulation(amount: int, numbers: List[int]) -> bool:
-    table = []
-    for _ in range(amount + 1):
-        table.append(False)
+    table = [False] * (amount + 1)
 
     table[0] = True
 
