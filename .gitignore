@@ -22,6 +22,9 @@ zig-out
 # Python
 venv
 
+# C++
+bin
+
 # Other
 *.sqlite
 *.sqlite3
