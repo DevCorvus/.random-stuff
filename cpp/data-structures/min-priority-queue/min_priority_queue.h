@@ -12,77 +12,75 @@ class MinPriorityQueue {
 
     bool empty() const { return get_size() == 0; }
 
-    void insert(int value) {
+    void push(int value) {
         heap.push_back(value);
-        swim(get_size() - 1);
+        shift_up(get_size() - 1);
     }
 
-    int remove() {
+    int pop() { return remove_at(0); }
+
+    int peek() const {
         if (empty()) {
             throw std::out_of_range("Heap is empty");
         }
-
-        auto removed_value = heap[0];
-
-        swap(0, get_size() - 1);
-        heap.pop_back();
-
-        auto root_before_sink = heap[0];
-
-        sink(0);
-
-        auto root_after_sink = heap[0];
-
-        if (root_after_sink == root_before_sink) {
-            swim(0);
-        }
-
-        return removed_value;
+        return heap[0];
     }
 
-    int peek() const { return heap[0]; }
+    bool contains(int value) const {
+        auto size = get_size();
+
+        for (int i = 0; i < size; i++) {
+            if (heap[i] == value) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool remove(int value) {
+        auto size = get_size();
+
+        for (int i = 0; i < size; i++) {
+            if (heap[i] == value) {
+                remove_at(i);
+                return true;
+            }
+        }
+
+        return false;
+    }
 
   private:
     std::vector<int> heap;
 
-    void swim(unsigned int i) {
+    void shift_up(unsigned int i) {
         auto parent = (i - 1) / 2;
 
-        // This could be recursive
-        while (i > 0 && is_less(i, parent)) {
+        if (i > 0 && is_less(i, parent)) {
             swap(i, parent);
-
-            i = parent;
-            parent = (i - 1) / 2;
+            shift_up(parent);
         }
     }
 
-    void sink(unsigned int i) {
-        // This can also be recursive
-        while (true) {
-            auto left = 2 * i + 1;
-            auto right = 2 * i + 2;
+    void shift_down(unsigned int i) {
+        auto left = 2 * i + 1;
+        auto right = 2 * i + 2;
+        unsigned int smallest = i;
 
-            auto size = get_size();
+        auto size = get_size();
 
-            if (left >= size || right >= size) {
-                break;
-            }
+        if (left < size && is_less(left, smallest)) {
+            smallest = left;
+        }
 
-            unsigned int smallest;
+        if (right < size && is_less(right, smallest)) {
+            smallest = right;
+        }
 
-            if (is_less(left, right)) {
-                smallest = left;
-            } else {
-                smallest = right;
-            }
-
-            if (is_less(smallest, i)) {
-                swap(i, smallest);
-                i = smallest;
-            } else {
-                break;
-            }
+        if (smallest != i) {
+            swap(i, smallest);
+            shift_down(smallest);
         }
     }
 
@@ -96,5 +94,30 @@ class MinPriorityQueue {
 
         heap[i] = elem_j;
         heap[j] = elem_i;
+    }
+
+    int remove_at(unsigned int i) {
+        auto size = get_size();
+
+        if (empty() || i >= size) {
+            throw std::out_of_range("Heap is empty");
+        }
+
+        auto removed_value = heap[i];
+
+        swap(i, size - 1);
+        heap.pop_back();
+
+        auto root_before = heap[0];
+
+        shift_down(i);
+
+        auto root_after = heap[0];
+
+        if (root_after == root_before) {
+            shift_up(i);
+        }
+
+        return removed_value;
     }
 };
