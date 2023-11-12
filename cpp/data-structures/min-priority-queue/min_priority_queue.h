@@ -26,29 +26,17 @@ class MinPriorityQueue {
         return heap[0];
     }
 
-    bool contains(int value) const {
-        auto size = get_size();
-
-        for (int i = 0; i < size; i++) {
-            if (heap[i] == value) {
-                return true;
-            }
-        }
-
-        return false;
-    }
+    bool contains(int value) const { return index_of(value) != -1; }
 
     bool remove(int value) {
-        auto size = get_size();
+        auto i = index_of(value);
 
-        for (int i = 0; i < size; i++) {
-            if (heap[i] == value) {
-                remove_at(i);
-                return true;
-            }
+        if (i == -1) {
+            return false;
         }
 
-        return false;
+        remove_at(i);
+        return true;
     }
 
   private:
@@ -119,5 +107,17 @@ class MinPriorityQueue {
         }
 
         return removed_value;
+    }
+
+    int index_of(int value) const {
+        auto size = get_size();
+
+        for (int i = 0; i < size; i++) {
+            if (heap[i] == value) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 };
