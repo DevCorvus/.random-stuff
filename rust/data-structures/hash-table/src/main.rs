@@ -1,7 +1,7 @@
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
 
-const DEFAULT_SIZE: usize = 10;
+const DEFAULT_SIZE: usize = 100;
 
 struct Node<T> {
     key: String,
@@ -22,8 +22,10 @@ impl<T> Node<T> {
 struct HashTable<T> {
     table: Vec<Option<Node<T>>>,
     size: usize,
+    capacity: usize,
 }
 
+// TODO: Make it grow and shrink accordingly to avoid hash collisions
 impl<T> HashTable<T> {
     fn new() -> Self {
         let mut table: Vec<Option<Node<T>>> = Vec::with_capacity(DEFAULT_SIZE);
@@ -35,7 +37,8 @@ impl<T> HashTable<T> {
 
         Self {
             table,
-            size: DEFAULT_SIZE,
+            size: 0,
+            capacity: DEFAULT_SIZE,
         }
     }
 
@@ -44,7 +47,7 @@ impl<T> HashTable<T> {
         hasher.write(key.as_bytes());
 
         let result = hasher.finish();
-        return (result as usize) % self.size;
+        return (result as usize) % self.capacity;
     }
 
     fn put(&mut self, key: &str, value: T) {
@@ -54,6 +57,7 @@ impl<T> HashTable<T> {
 
         if curr_node.is_none() {
             self.table[key_hash] = Some(Node::new(key, value));
+            self.size += 1;
             return;
         }
 
@@ -63,6 +67,7 @@ impl<T> HashTable<T> {
                 return;
             } else if node.next.is_none() {
                 node.next = Box::new(Some(Node::new(key, value)));
+                self.size += 1;
                 return;
             } else {
                 curr_node = (*node.next).as_mut();
@@ -92,6 +97,7 @@ impl<T> HashTable<T> {
             Some(node) => {
                 if node.key == key && node.next.is_none() {
                     self.table[key_hash] = None;
+                    self.size -= 1;
                     return;
                 }
             }
@@ -106,6 +112,7 @@ impl<T> HashTable<T> {
             if let Some(next) = (*node.next).as_mut() {
                 if next.key == key {
                     node.next = Box::new(next.next.take());
+                    self.size -= 1;
                     return;
                 }
             }
@@ -116,6 +123,7 @@ impl<T> HashTable<T> {
 
 fn main() {
     let mut ht: HashTable<i32> = HashTable::new();
+    println!("Capacity: {}", ht.capacity);
     println!("Size: {}", ht.size);
 
     ht.put("uwu", 69);
@@ -123,7 +131,11 @@ fn main() {
     ht.put("cheno", 13);
     ht.put("rajoy", 36);
 
+    println!("Size: {}", ht.size);
+
     ht.delete("rajoy");
+
+    println!("Size: {}", ht.size);
 
     if let Some(node) = ht.get("uwu") {
         println!("{}: {}", node.key, node.value);
