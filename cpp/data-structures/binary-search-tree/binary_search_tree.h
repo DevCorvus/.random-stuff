@@ -5,9 +5,6 @@
 #include <queue>
 #include <stack>
 
-// If I weren't using data structures that require ownership like stacks and
-// queues then you should use unique_ptr
-
 struct TreeNode {
     int value;
     std::shared_ptr<TreeNode> left;
@@ -289,7 +286,7 @@ class BinarySearchTree {
             if (node->left == nullptr && node->right == nullptr) {
                 node = nullptr;
             } else if (node->left != nullptr && node->right != nullptr) {
-                // You can either use the right' smallest or left's biggest
+                // You can either use the right's smallest or left's biggest
                 auto right_smallest = get_smallest_child(node->right);
                 node->value = right_smallest->value;
                 right_smallest = right_smallest->right;
