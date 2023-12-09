@@ -30,3 +30,4 @@ bin
 *.sqlite3
 *.db
 .env
+uploads
