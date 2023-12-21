@@ -1,5 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 
+const DEPTH_TOKEN: isize = -1;
+
 struct Edge {
     #[allow(unused)]
     from: usize,
@@ -146,6 +148,53 @@ impl AdjacencyListGraph {
             return None;
         }
     }
+
+    fn breadth_first_search_recursive(&self, start: usize) -> usize {
+        let mut visited = vec![false; self.size];
+
+        let mut queue: VecDeque<isize> = VecDeque::new();
+        queue.push_back(start as isize);
+        queue.push_back(DEPTH_TOKEN);
+
+        return self._breadth_first_search_recursive(&mut visited, &mut queue);
+    }
+
+    fn _breadth_first_search_recursive(
+        &self,
+        visited: &mut Vec<bool>,
+        queue: &mut VecDeque<isize>,
+    ) -> usize {
+        let at = queue.pop_front().unwrap();
+
+        if at == DEPTH_TOKEN {
+            queue.push_back(DEPTH_TOKEN);
+            return 1;
+        }
+
+        let at: usize = at as usize;
+
+        if visited[at] {
+            return 0;
+        }
+
+        visited[at] = true;
+
+        if let Some(neighbours) = self.data.get(&at) {
+            for next in neighbours {
+                if !visited[next.to] {
+                    queue.push_back(next.to as isize);
+                }
+            }
+        }
+
+        let mut depth: usize = 0;
+
+        while queue.len() != 1 || *queue.front().unwrap() != DEPTH_TOKEN {
+            depth += self._breadth_first_search_recursive(visited, queue);
+        }
+
+        return depth;
+    }
 }
 
 fn main() {
@@ -190,4 +239,24 @@ fn main() {
         another_graph.reconstruct_path_with_bfs(10, 5),
         Some(vec![10, 9, 0, 7, 6, 5])
     );
+
+    let mut another_another_graph = AdjacencyListGraph::new();
+
+    another_another_graph.add_unweighted_undirected_edge(0, 1);
+    another_another_graph.add_unweighted_undirected_edge(0, 2);
+    another_another_graph.add_unweighted_undirected_edge(0, 3);
+    another_another_graph.add_unweighted_undirected_edge(2, 9);
+    another_another_graph.add_unweighted_undirected_edge(8, 2);
+    another_another_graph.add_unweighted_undirected_edge(3, 4);
+    another_another_graph.add_unweighted_undirected_edge(10, 11);
+    another_another_graph.add_unweighted_undirected_edge(12, 13);
+    another_another_graph.add_unweighted_undirected_edge(3, 5);
+    another_another_graph.add_unweighted_undirected_edge(5, 7);
+    another_another_graph.add_unweighted_undirected_edge(5, 6);
+    another_another_graph.add_unweighted_undirected_edge(0, 10);
+    another_another_graph.add_unweighted_undirected_edge(11, 12);
+
+    assert_eq!(another_another_graph.size, 14);
+
+    another_another_graph.breadth_first_search_recursive(12);
 }
