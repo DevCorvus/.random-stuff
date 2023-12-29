@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::collections::{HashMap, VecDeque};
 
 const DEPTH_TOKEN: isize = -1;
@@ -6,7 +7,6 @@ struct Edge {
     #[allow(unused)]
     from: usize,
     to: usize,
-    #[allow(unused)]
     cost: isize,
 }
 
@@ -195,6 +195,112 @@ impl AdjacencyListGraph {
 
         return depth;
     }
+
+    fn topological_sort(&self) -> Vec<usize> {
+        let mut visited = vec![false; self.size];
+        let mut ordering = vec![0; self.size];
+
+        let mut i = self.size - 1;
+
+        for at in 0..self.size {
+            if !visited[at] {
+                i = self._dfs_topsort(i, at, &mut visited, &mut ordering);
+            }
+        }
+
+        return ordering;
+    }
+
+    fn _dfs_topsort(
+        &self,
+        mut i: usize,
+        at: usize,
+        visited: &mut Vec<bool>,
+        ordering: &mut Vec<usize>,
+    ) -> usize {
+        visited[at] = true;
+
+        if let Some(edges) = self.data.get(&at) {
+            for edge in edges {
+                if !visited[edge.to] {
+                    i = self._dfs_topsort(i, edge.to, visited, ordering);
+                }
+            }
+        }
+
+        ordering[i] = at;
+
+        if i > 0 {
+            return i - 1;
+        } else {
+            return i;
+        }
+    }
+
+    fn dag_shortest_path(&self, start: usize) -> Vec<Option<isize>> {
+        let topsorted = self.topological_sort();
+        let mut distances = vec![None; self.size];
+
+        distances[start] = Some(0);
+
+        for i in 0..self.size {
+            let node_index = topsorted[i];
+            if let Some(distance) = distances[node_index] {
+                if let Some(edges) = self.data.get(&node_index) {
+                    for edge in edges {
+                        let new_distance = distance + edge.cost;
+
+                        match distances[edge.to] {
+                            Some(next_distance) => {
+                                distances[edge.to] = Some(min(next_distance, new_distance));
+                            }
+                            None => {
+                                distances[edge.to] = Some(new_distance);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return distances;
+    }
+
+    // Just like finding the shortest path but costs are negative
+    fn dag_longest_path(&self, start: usize) -> Vec<Option<isize>> {
+        let topsorted = self.topological_sort();
+        let mut distances = vec![None; self.size];
+
+        distances[start] = Some(0);
+
+        for i in 0..self.size {
+            let node_index = topsorted[i];
+            if let Some(distance) = distances[node_index] {
+                if let Some(edges) = self.data.get(&node_index) {
+                    for edge in edges {
+                        let new_distance = distance + (edge.cost * -1);
+
+                        match distances[edge.to] {
+                            Some(next_distance) => {
+                                distances[edge.to] = Some(min(next_distance, new_distance));
+                            }
+                            None => {
+                                distances[edge.to] = Some(new_distance);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        distances = distances
+            .into_iter()
+            .flatten()
+            .map(|distance| Some(distance * -1))
+            .collect();
+
+        return distances;
+    }
 }
 
 fn main() {
@@ -205,7 +311,7 @@ fn main() {
     graph.add_directed_edge(1, 2, -2);
     graph.add_directed_edge(1, 3, 6);
     graph.add_directed_edge(2, 3, 1);
-    graph.add_directed_edge(2, 2, 10);
+    // graph.add_directed_edge(2, 2, 10);
 
     assert_eq!(graph.size, 4);
 
@@ -214,6 +320,18 @@ fn main() {
 
     assert_eq!(graph.depth_first_search_recursive(0), 4);
     assert_eq!(graph.depth_first_search_recursive(3), 1);
+
+    assert_eq!(graph.topological_sort(), [0, 1, 2, 3]);
+
+    assert_eq!(
+        graph.dag_shortest_path(1),
+        [None, Some(0), Some(-2), Some(-1)]
+    );
+
+    assert_eq!(
+        graph.dag_longest_path(0),
+        [Some(0), Some(4), Some(5), Some(10)]
+    );
 
     let mut another_graph = AdjacencyListGraph::new();
 
