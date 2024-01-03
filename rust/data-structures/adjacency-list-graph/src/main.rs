@@ -293,13 +293,11 @@ impl AdjacencyListGraph {
             }
         }
 
-        distances = distances
+        return distances
             .into_iter()
             .flatten()
             .map(|distance| Some(distance * -1))
             .collect();
-
-        return distances;
     }
 }
 
