@@ -1,5 +1,5 @@
-use std::cmp::min;
-use std::collections::{HashMap, VecDeque};
+use std::cmp::{min, Ordering};
+use std::collections::{BinaryHeap, HashMap, VecDeque};
 
 const DEPTH_TOKEN: isize = -1;
 
@@ -8,6 +8,28 @@ struct Edge {
     from: usize,
     to: usize,
     cost: isize,
+}
+
+// Priority Queue node for Dijkstra's algorithm
+#[derive(Eq, PartialEq)]
+struct Node {
+    index: usize,
+    cost: usize,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other
+            .cost
+            .cmp(&self.cost)
+            .then_with(|| self.index.cmp(&other.index))
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 struct AdjacencyListGraph {
@@ -299,6 +321,59 @@ impl AdjacencyListGraph {
             .map(|distance| Some(distance * -1))
             .collect();
     }
+
+    fn dijkstra(&self, start: usize, end: usize) -> Option<(usize, Vec<usize>)> {
+        let mut distances = vec![usize::MAX; self.size];
+        distances[start] = 0;
+
+        let mut heap = BinaryHeap::new(); // Priority Queue
+        heap.push(Node {
+            index: start,
+            cost: 0,
+        });
+
+        let mut visited = vec![false; self.size];
+        visited[start] = true;
+
+        // Useful to reconstruct the path
+        let mut prev = vec![None; self.size];
+
+        while let Some(Node { index, cost }) = heap.pop() {
+            visited[index] = true;
+
+            if cost > distances[index] {
+                continue;
+            }
+
+            if let Some(edges) = self.data.get(&index) {
+                for edge in edges {
+                    if visited[edge.to] {
+                        continue;
+                    }
+
+                    let next = Node {
+                        index: edge.to,
+                        cost: cost + edge.cost as usize,
+                    };
+
+                    if next.cost < distances[next.index] {
+                        prev[edge.to] = Some(index);
+                        distances[next.index] = next.cost;
+                        heap.push(next);
+                    }
+                }
+            }
+
+            if index == end {
+                return Some((
+                    distances[end],
+                    self._reconstruct_path(start, end, prev).unwrap(),
+                ));
+            }
+        }
+
+        return None;
+    }
 }
 
 fn main() {
@@ -306,7 +381,8 @@ fn main() {
 
     graph.add_directed_edge(0, 1, 4);
     graph.add_directed_edge(0, 2, 5);
-    graph.add_directed_edge(1, 2, -2);
+    // graph.add_directed_edge(1, 2, -2);
+    graph.add_directed_edge(1, 2, 2);
     graph.add_directed_edge(1, 3, 6);
     graph.add_directed_edge(2, 3, 1);
     // graph.add_directed_edge(2, 2, 10);
@@ -323,13 +399,15 @@ fn main() {
 
     assert_eq!(
         graph.dag_shortest_path(1),
-        [None, Some(0), Some(-2), Some(-1)]
+        [None, Some(0), Some(2), Some(3)]
     );
 
     assert_eq!(
         graph.dag_longest_path(0),
-        [Some(0), Some(4), Some(5), Some(10)]
+        [Some(0), Some(4), Some(6), Some(10)]
     );
+
+    assert_eq!(graph.dijkstra(0, 3), Some((6, vec![0, 2, 3])));
 
     let mut another_graph = AdjacencyListGraph::new();
 
