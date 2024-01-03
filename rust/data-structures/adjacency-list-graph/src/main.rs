@@ -4,8 +4,6 @@ use std::collections::{BinaryHeap, HashMap, VecDeque};
 const DEPTH_TOKEN: isize = -1;
 
 struct Edge {
-    #[allow(unused)]
-    from: usize,
     to: usize,
     cost: isize,
 }
@@ -46,7 +44,7 @@ impl AdjacencyListGraph {
     }
 
     fn add_directed_edge(&mut self, from: usize, to: usize, cost: isize) {
-        let edge = Edge { from, to, cost };
+        let edge = Edge { to, cost };
 
         if self.data.get(&from).is_none() {
             self.data.insert(from, Vec::new());
