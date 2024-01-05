@@ -1,5 +1,6 @@
 use std::cmp::{min, Ordering};
 use std::collections::{BinaryHeap, HashMap, VecDeque};
+mod min_indexed_d_heap;
 
 const DEPTH_TOKEN: isize = -1;
 
@@ -33,6 +34,7 @@ impl PartialOrd for Node {
 struct AdjacencyListGraph {
     data: HashMap<usize, Vec<Edge>>,
     size: usize,
+    edge_count: usize,
 }
 
 impl AdjacencyListGraph {
@@ -40,6 +42,7 @@ impl AdjacencyListGraph {
         Self {
             data: HashMap::new(),
             size: 0,
+            edge_count: 0,
         }
     }
 
@@ -58,6 +61,8 @@ impl AdjacencyListGraph {
 
         let edges = self.data.get_mut(&from).unwrap();
         edges.push(edge);
+
+        self.edge_count += 1;
     }
 
     fn add_undirected_edge(&mut self, from: usize, to: usize, cost: isize) {
@@ -320,12 +325,12 @@ impl AdjacencyListGraph {
             .collect();
     }
 
-    fn dijkstra(&self, start: usize, end: usize) -> Option<(usize, Vec<usize>)> {
+    fn lazy_dijkstra(&self, start: usize, end: usize) -> Option<(usize, Vec<usize>)> {
         let mut distances = vec![usize::MAX; self.size];
         distances[start] = 0;
 
-        let mut heap = BinaryHeap::new(); // Priority Queue
-        heap.push(Node {
+        let mut priority_queue = BinaryHeap::new(); // Priority Queue
+        priority_queue.push(Node {
             index: start,
             cost: 0,
         });
@@ -336,9 +341,8 @@ impl AdjacencyListGraph {
         // Useful to reconstruct the path
         let mut prev = vec![None; self.size];
 
-        while let Some(Node { index, cost }) = heap.pop() {
+        while let Some(Node { index, cost }) = priority_queue.pop() {
             visited[index] = true;
-
             if cost > distances[index] {
                 continue;
             }
@@ -357,12 +361,73 @@ impl AdjacencyListGraph {
                     if next.cost < distances[next.index] {
                         prev[edge.to] = Some(index);
                         distances[next.index] = next.cost;
-                        heap.push(next);
+                        priority_queue.push(next);
                     }
                 }
             }
 
             if index == end {
+                return Some((
+                    distances[end],
+                    self._reconstruct_path(start, end, prev).unwrap(),
+                ));
+            }
+        }
+
+        return None;
+    }
+
+    fn eager_dijkstra_with_dary_optimization(
+        &self,
+        start: usize,
+        end: usize,
+    ) -> Option<(usize, Vec<usize>)> {
+        let degree: usize = self.edge_count / self.size;
+
+        let mut dary_indexed_priority_queue: min_indexed_d_heap::MinIndexedDHeap<usize> =
+            min_indexed_d_heap::MinIndexedDHeap::new(degree, self.size);
+
+        dary_indexed_priority_queue.insert(start, 0);
+
+        let mut distances = vec![usize::MAX; self.size];
+        distances[start] = 0;
+
+        let mut visited = vec![false; self.size];
+
+        // Useful to reconstruct the path
+        let mut prev = vec![None; self.size];
+
+        while let Some(min_index) = dary_indexed_priority_queue.peek_min_key_index() {
+            visited[min_index] = true;
+
+            let min_value = dary_indexed_priority_queue.poll_min_value().unwrap();
+
+            if min_value > distances[min_index] {
+                continue;
+            }
+
+            if let Some(edges) = self.data.get(&min_index) {
+                for edge in edges {
+                    if visited[edge.to] {
+                        continue;
+                    }
+
+                    let new_distance = distances[min_index] + edge.cost as usize;
+
+                    if new_distance < distances[edge.to] {
+                        prev[edge.to] = Some(min_index);
+                        distances[edge.to] = new_distance;
+
+                        if !dary_indexed_priority_queue.contains(edge.to) {
+                            dary_indexed_priority_queue.insert(edge.to, new_distance);
+                        } else {
+                            dary_indexed_priority_queue.decrease(edge.to, new_distance);
+                        }
+                    }
+                }
+            }
+
+            if min_index == end {
                 return Some((
                     distances[end],
                     self._reconstruct_path(start, end, prev).unwrap(),
@@ -405,7 +470,12 @@ fn main() {
         [Some(0), Some(4), Some(6), Some(10)]
     );
 
-    assert_eq!(graph.dijkstra(0, 3), Some((6, vec![0, 2, 3])));
+    assert_eq!(graph.lazy_dijkstra(0, 3), Some((6, vec![0, 2, 3])));
+
+    assert_eq!(
+        graph.eager_dijkstra_with_dary_optimization(0, 3),
+        Some((6, vec![0, 2, 3]))
+    );
 
     let mut another_graph = AdjacencyListGraph::new();
 
