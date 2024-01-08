@@ -437,6 +437,32 @@ impl AdjacencyListGraph {
 
         return None;
     }
+
+    fn bellman_ford(&self, start: usize) -> Vec<isize> {
+        let mut distances = vec![isize::MAX; self.size];
+        distances[start] = 0;
+
+        for (node, edges) in self.data.iter() {
+            for edge in edges {
+                let new_distance = distances[*node] + edge.cost;
+
+                if new_distance < distances[edge.to] {
+                    distances[edge.to] = new_distance;
+                }
+            }
+        }
+
+        // Find negative cycles
+        for (node, edges) in self.data.iter() {
+            for edge in edges {
+                if distances[*node] + edge.cost < distances[edge.to] {
+                    distances[edge.to] = isize::MIN;
+                }
+            }
+        }
+
+        return distances;
+    }
 }
 
 fn main() {
@@ -476,6 +502,8 @@ fn main() {
         graph.eager_dijkstra_with_dary_optimization(0, 3),
         Some((6, vec![0, 2, 3]))
     );
+
+    assert_eq!(graph.bellman_ford(0), vec![0, 4, 5, 6]);
 
     let mut another_graph = AdjacencyListGraph::new();
 
