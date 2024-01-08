@@ -1,25 +1,28 @@
 use std::collections::VecDeque;
 
 struct AdjacencyMatrixGraph {
-    data: Vec<Vec<usize>>,
+    data: Vec<Vec<Option<isize>>>,
     size: usize,
+    edges: usize,
 }
 
 impl AdjacencyMatrixGraph {
     fn new(size: usize) -> Self {
         Self {
-            data: vec![vec![0; size]; size],
+            data: vec![vec![None; size]; size],
             size,
+            edges: 0,
         }
     }
 
-    fn add_directed_edge(&mut self, from: usize, to: usize, weight: usize) {
+    fn add_directed_edge(&mut self, from: usize, to: usize, weight: isize) {
         if from < self.size && to < self.size {
-            self.data[from][to] = weight;
+            self.data[from][to] = Some(weight);
+            self.edges += 1;
         }
     }
 
-    fn add_undirected_edge(&mut self, from: usize, to: usize, weight: usize) {
+    fn add_undirected_edge(&mut self, from: usize, to: usize, weight: isize) {
         self.add_directed_edge(from, to, weight);
         self.add_directed_edge(to, from, weight);
     }
@@ -42,7 +45,7 @@ impl AdjacencyMatrixGraph {
         println!("{}", at);
 
         for (i, weight) in self.data[at].iter().enumerate() {
-            if *weight != 0 {
+            if weight.is_some() {
                 self._depth_first_search(i, visited);
             }
         }
@@ -58,12 +61,45 @@ impl AdjacencyMatrixGraph {
         while let Some(i) = queue.pop_front() {
             println!("{}", i);
             for (next, weight) in self.data[i].iter().enumerate() {
-                if *weight != 0 && !visited[next] {
+                if weight.is_some() && !visited[next] {
                     visited[next] = true;
                     queue.push_back(next);
                 }
             }
         }
+    }
+
+    fn bellman_ford(&self, start: usize) -> Vec<isize> {
+        let mut distances = vec![isize::MAX; self.size];
+        distances[start] = 0;
+
+        for _ in 0..self.size - 1 {
+            for i in 0..self.size {
+                for j in 0..self.size {
+                    if let Some(distance) = self.data[i][j] {
+                        let new_distance = distances[i] + distance;
+
+                        if new_distance < distances[j] {
+                            distances[j] = new_distance;
+                        }
+                    }
+                }
+            }
+        }
+
+        for _ in 0..self.size - 1 {
+            for i in 0..self.size {
+                for j in 0..self.size {
+                    if let Some(distance) = self.data[i][j] {
+                        if distances[i] + distance < distances[j] {
+                            distances[j] = isize::MIN;
+                        }
+                    }
+                }
+            }
+        }
+
+        return distances;
     }
 }
 
@@ -83,4 +119,16 @@ fn main() {
 
     println!("BFS");
     graph.breadth_first_search(0);
+
+    let mut another_graph = AdjacencyMatrixGraph::new(4);
+
+    another_graph.add_directed_edge(0, 1, 4);
+    another_graph.add_directed_edge(0, 2, 5);
+    another_graph.add_directed_edge(1, 2, -2);
+    another_graph.add_directed_edge(1, 3, 6);
+    another_graph.add_directed_edge(2, 3, 1);
+    another_graph.add_directed_edge(2, 2, 10);
+
+    println!("Bellman-Ford Algorithm");
+    println!("{:?}", another_graph.bellman_ford(0));
 }
