@@ -8,8 +8,14 @@ struct AdjacencyMatrixGraph {
 
 impl AdjacencyMatrixGraph {
     fn new(size: usize) -> Self {
+        let mut data = vec![vec![None; size]; size];
+
+        for i in 0..size {
+            data[i][i] = Some(0);
+        }
+
         Self {
-            data: vec![vec![None; size]; size],
+            data,
             size,
             edges: 0,
         }
@@ -101,6 +107,51 @@ impl AdjacencyMatrixGraph {
 
         return distances;
     }
+
+    fn floyd_warshall(&self) -> Vec<Vec<isize>> {
+        let mut distances = vec![vec![isize::MAX; self.size]; self.size];
+
+        for i in 0..self.size {
+            for j in 0..self.size {
+                if let Some(weight) = self.data[i][j] {
+                    distances[i][j] = weight;
+                }
+            }
+        }
+
+        for k in 0..self.size {
+            for i in 0..self.size {
+                for j in 0..self.size {
+                    let new_distance: isize;
+
+                    if distances[i][k] != isize::MAX && distances[k][j] != isize::MAX {
+                        new_distance = distances[i][k] + distances[k][j];
+                    } else {
+                        new_distance = isize::MAX;
+                    }
+
+                    if new_distance < distances[i][j] {
+                        distances[i][j] = new_distance;
+                    }
+                }
+            }
+        }
+
+        for k in 0..self.size {
+            for i in 0..self.size {
+                for j in 0..self.size {
+                    if distances[i][k] != isize::MAX
+                        && distances[k][j] != isize::MAX
+                        && distances[k][k] < 0
+                    {
+                        distances[i][j] = isize::MIN;
+                    }
+                }
+            }
+        }
+
+        return distances;
+    }
 }
 
 fn main() {
@@ -131,4 +182,9 @@ fn main() {
 
     println!("Bellman-Ford Algorithm");
     println!("{:?}", another_graph.bellman_ford(0));
+
+    println!("Floyd-Warshall Algorithm");
+    for distances in another_graph.floyd_warshall() {
+        println!("{:?}", distances);
+    }
 }
