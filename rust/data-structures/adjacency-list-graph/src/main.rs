@@ -450,21 +450,27 @@ impl AdjacencyListGraph {
         let mut distances = vec![isize::MAX; self.size];
         distances[start] = 0;
 
-        for (node, edges) in self.data.iter() {
-            for edge in edges {
-                let new_distance = distances[*node] + edge.cost;
+        for _ in 0..self.size - 1 {
+            for (node, edges) in self.data.iter() {
+                for edge in edges {
+                    let new_distance = distances[*node]
+                        .checked_add(edge.cost)
+                        .unwrap_or(isize::MAX);
 
-                if new_distance < distances[edge.to] {
-                    distances[edge.to] = new_distance;
+                    if new_distance < distances[edge.to] {
+                        distances[edge.to] = new_distance;
+                    }
                 }
             }
         }
 
         // Find negative cycles
-        for (node, edges) in self.data.iter() {
-            for edge in edges {
-                if distances[*node] + edge.cost < distances[edge.to] {
-                    distances[edge.to] = isize::MIN;
+        for _ in 0..self.size - 1 {
+            for (node, edges) in self.data.iter() {
+                for edge in edges {
+                    if distances[*node] + edge.cost < distances[edge.to] {
+                        distances[edge.to] = isize::MIN;
+                    }
                 }
             }
         }
