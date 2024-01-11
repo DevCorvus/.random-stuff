@@ -161,13 +161,9 @@ impl AdjacencyMatrixGraph {
         for k in 0..self.size {
             for i in 0..self.size {
                 for j in 0..self.size {
-                    let new_distance: isize;
-
-                    if distances[i][k] != isize::MAX && distances[k][j] != isize::MAX {
-                        new_distance = distances[i][k] + distances[k][j];
-                    } else {
-                        new_distance = isize::MAX;
-                    }
+                    let new_distance = distances[i][k]
+                        .checked_add(distances[k][j])
+                        .unwrap_or(isize::MAX);
 
                     if new_distance < distances[i][j] {
                         distances[i][j] = new_distance;
