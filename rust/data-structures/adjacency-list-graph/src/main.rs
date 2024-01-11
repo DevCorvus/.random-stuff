@@ -540,6 +540,84 @@ impl AdjacencyListGraph {
             }
         }
     }
+
+    fn find_articulation_points(&self) -> Vec<bool> {
+        let id: usize = 0;
+        let mut low_links = vec![None; self.size];
+        let mut ids = vec![None; self.size];
+        let mut visited = vec![false; self.size];
+        let mut is_articulation_point = vec![false; self.size];
+        let root_node_outcoming_edge_count = &mut 0;
+
+        for i in 0..self.size {
+            if !visited[i] {
+                *root_node_outcoming_edge_count = 0;
+                self._dfs_articulation_points(
+                    i,
+                    i,
+                    None,
+                    id,
+                    &mut low_links,
+                    &mut ids,
+                    &mut visited,
+                    &mut is_articulation_point,
+                    root_node_outcoming_edge_count,
+                );
+                is_articulation_point[i] = *root_node_outcoming_edge_count > 1;
+            }
+        }
+
+        return is_articulation_point;
+    }
+
+    fn _dfs_articulation_points(
+        &self,
+        root: usize,
+        at: usize,
+        parent: Option<usize>,
+        mut id: usize,
+        low_links: &mut Vec<Option<usize>>,
+        ids: &mut Vec<Option<usize>>,
+        visited: &mut Vec<bool>,
+        is_articulation_point: &mut Vec<bool>,
+        root_node_outcoming_edge_count: &mut usize,
+    ) {
+        if parent == Some(root) {
+            *root_node_outcoming_edge_count += 1;
+        }
+
+        visited[at] = true;
+
+        low_links[at] = Some(id);
+        ids[at] = Some(id);
+
+        id += 1;
+
+        if let Some(edges) = self.data.get(&at) {
+            for edge in edges {
+                if !visited[edge.to] {
+                    self._dfs_articulation_points(
+                        root,
+                        edge.to,
+                        Some(at),
+                        id,
+                        low_links,
+                        ids,
+                        visited,
+                        is_articulation_point,
+                        root_node_outcoming_edge_count,
+                    );
+                    low_links[at] = min(low_links[at], low_links[edge.to]);
+
+                    if ids[at] <= low_links[edge.to] {
+                        is_articulation_point[at] = true;
+                    }
+                } else {
+                    low_links[at] = min(low_links[at], ids[edge.to]);
+                }
+            }
+        }
+    }
 }
 
 fn main() {
@@ -647,5 +725,10 @@ fn main() {
             Bridge { from: 2, to: 3 },
             Bridge { from: 2, to: 5 }
         ]
+    );
+
+    assert_eq!(
+        graph_for_bridges.find_articulation_points(),
+        vec![false, false, true, true, false, true, false, false, false]
     );
 }
