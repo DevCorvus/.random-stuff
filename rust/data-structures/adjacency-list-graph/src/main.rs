@@ -16,6 +16,14 @@ struct Node {
     cost: usize,
 }
 
+#[derive(Debug, PartialEq)]
+struct Bridge {
+    #[allow(unused)]
+    from: usize,
+    #[allow(unused)]
+    to: usize,
+}
+
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> Ordering {
         other
@@ -463,6 +471,69 @@ impl AdjacencyListGraph {
 
         return distances;
     }
+
+    fn find_bridges(&self) -> Vec<Bridge> {
+        let id: usize = 0;
+        let mut low_links = vec![None; self.size];
+        let mut ids = vec![None; self.size];
+        let mut visited = vec![false; self.size];
+        let mut bridges = Vec::new();
+
+        for i in 0..self.size {
+            if !visited[i] {
+                self._dfs_bridges(
+                    i,
+                    None,
+                    id,
+                    &mut low_links,
+                    &mut ids,
+                    &mut visited,
+                    &mut bridges,
+                );
+            }
+        }
+
+        return bridges;
+    }
+
+    fn _dfs_bridges(
+        &self,
+        at: usize,
+        parent: Option<usize>,
+        mut id: usize,
+        low_links: &mut Vec<Option<usize>>,
+        ids: &mut Vec<Option<usize>>,
+        visited: &mut Vec<bool>,
+        bridges: &mut Vec<Bridge>,
+    ) {
+        visited[at] = true;
+        id += 1;
+
+        low_links[at] = Some(id);
+        ids[at] = Some(id);
+
+        if let Some(edges) = self.data.get(&at) {
+            for edge in edges {
+                if Some(edge.to) == parent {
+                    continue;
+                }
+
+                if !visited[edge.to] {
+                    self._dfs_bridges(edge.to, Some(at), id, low_links, ids, visited, bridges);
+                    low_links[at] = min(low_links[at], low_links[edge.to]);
+
+                    if ids[at] < low_links[edge.to] {
+                        bridges.push(Bridge {
+                            from: at,
+                            to: edge.to,
+                        });
+                    }
+                } else {
+                    low_links[at] = min(low_links[at], ids[edge.to]);
+                }
+            }
+        }
+    }
 }
 
 fn main() {
@@ -549,4 +620,26 @@ fn main() {
     assert_eq!(another_another_graph.size, 14);
 
     another_another_graph.breadth_first_search_recursive(12);
+
+    let mut graph_for_bridges = AdjacencyListGraph::new();
+
+    graph_for_bridges.add_unweighted_undirected_edge(0, 1);
+    graph_for_bridges.add_unweighted_undirected_edge(0, 2);
+    graph_for_bridges.add_unweighted_undirected_edge(1, 2);
+    graph_for_bridges.add_unweighted_undirected_edge(2, 3);
+    graph_for_bridges.add_unweighted_undirected_edge(3, 4);
+    graph_for_bridges.add_unweighted_undirected_edge(2, 5);
+    graph_for_bridges.add_unweighted_undirected_edge(5, 6);
+    graph_for_bridges.add_unweighted_undirected_edge(6, 7);
+    graph_for_bridges.add_unweighted_undirected_edge(7, 8);
+    graph_for_bridges.add_unweighted_undirected_edge(8, 5);
+
+    assert_eq!(
+        graph_for_bridges.find_bridges(),
+        vec![
+            Bridge { from: 3, to: 4 },
+            Bridge { from: 2, to: 3 },
+            Bridge { from: 2, to: 5 }
+        ]
+    );
 }
