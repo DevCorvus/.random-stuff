@@ -513,10 +513,11 @@ impl AdjacencyListGraph {
         bridges: &mut Vec<Bridge>,
     ) {
         visited[at] = true;
-        id += 1;
 
         low_links[at] = Some(id);
         ids[at] = Some(id);
+
+        id += 1;
 
         if let Some(edges) = self.data.get(&at) {
             for edge in edges {
