@@ -73,6 +73,10 @@ impl AdjacencyListGraph {
         self.edge_count += 1;
     }
 
+    fn add_unweighted_directed_edge(&mut self, from: usize, to: usize) {
+        self.add_directed_edge(from, to, 1);
+    }
+
     fn add_undirected_edge(&mut self, from: usize, to: usize, cost: isize) {
         self.add_directed_edge(from, to, cost);
         self.add_directed_edge(to, from, cost);
@@ -543,7 +547,7 @@ impl AdjacencyListGraph {
     }
 
     fn find_articulation_points(&self) -> Vec<bool> {
-        let id: usize = 0;
+        let id = 0;
         let mut low_links = vec![None; self.size];
         let mut ids = vec![None; self.size];
         let mut visited = vec![false; self.size];
@@ -616,6 +620,102 @@ impl AdjacencyListGraph {
                 } else {
                     low_links[at] = min(low_links[at], ids[edge.to]);
                 }
+            }
+        }
+    }
+
+    fn tarjans_strongly_connected_components(&self) -> (usize, HashMap<usize, Vec<usize>>) {
+        let id = 0;
+        let count = &mut 0;
+        let mut ids = vec![None; self.size];
+        let mut low_links = vec![None; self.size];
+        let mut strongly_connected_components = vec![None; self.size];
+        let mut marked = vec![false; self.size];
+        let mut stack = Vec::new();
+
+        for i in 0..self.size {
+            if ids[i].is_none() {
+                self._dfs_tarjan(
+                    i,
+                    id,
+                    count,
+                    &mut ids,
+                    &mut low_links,
+                    &mut strongly_connected_components,
+                    &mut marked,
+                    &mut stack,
+                );
+            }
+        }
+
+        // Refine output
+        let mut table: HashMap<usize, Vec<usize>> = HashMap::new();
+
+        for i in 0..self.size {
+            if let Some(component) = strongly_connected_components[i] {
+                match table.get_mut(&component) {
+                    Some(list) => {
+                        list.push(i);
+                    }
+                    None => {
+                        let mut list = Vec::new();
+                        list.push(i);
+                        table.insert(component, list);
+                    }
+                }
+            }
+        }
+
+        return (*count, table);
+    }
+
+    fn _dfs_tarjan(
+        &self,
+        at: usize,
+        mut id: usize,
+        count: &mut usize,
+        ids: &mut Vec<Option<usize>>,
+        low_links: &mut Vec<Option<usize>>,
+        strongly_connected_components: &mut Vec<Option<usize>>,
+        marked: &mut Vec<bool>,
+        stack: &mut Vec<usize>,
+    ) {
+        ids[at] = Some(id);
+        low_links[at] = Some(id);
+        id += 1;
+
+        stack.push(at);
+        marked[at] = true;
+
+        if let Some(edges) = self.data.get(&at) {
+            for edge in edges {
+                if ids[edge.to].is_none() {
+                    self._dfs_tarjan(
+                        edge.to,
+                        id,
+                        count,
+                        ids,
+                        low_links,
+                        strongly_connected_components,
+                        marked,
+                        stack,
+                    );
+                }
+
+                if marked[edge.to] {
+                    low_links[at] = min(low_links[at], low_links[edge.to]);
+                }
+            }
+
+            if ids[at] == low_links[at] {
+                while let Some(node) = stack.pop() {
+                    marked[node] = false;
+                    strongly_connected_components[node] = Some(*count);
+                    if node == at {
+                        break;
+                    }
+                }
+                *count += 1;
             }
         }
     }
@@ -731,5 +831,31 @@ fn main() {
     assert_eq!(
         graph_for_bridges.find_articulation_points(),
         vec![false, false, true, true, false, true, false, false, false]
+    );
+
+    let mut graph_with_sccs = AdjacencyListGraph::new();
+
+    graph_with_sccs.add_unweighted_directed_edge(6, 0);
+    graph_with_sccs.add_unweighted_directed_edge(6, 2);
+    graph_with_sccs.add_unweighted_directed_edge(3, 4);
+    graph_with_sccs.add_unweighted_directed_edge(6, 4);
+    graph_with_sccs.add_unweighted_directed_edge(2, 0);
+    graph_with_sccs.add_unweighted_directed_edge(0, 1);
+    graph_with_sccs.add_unweighted_directed_edge(4, 5);
+    graph_with_sccs.add_unweighted_directed_edge(5, 6);
+    graph_with_sccs.add_unweighted_directed_edge(3, 7);
+    graph_with_sccs.add_unweighted_directed_edge(7, 5);
+    graph_with_sccs.add_unweighted_directed_edge(1, 2);
+    graph_with_sccs.add_unweighted_directed_edge(7, 3);
+    graph_with_sccs.add_unweighted_directed_edge(5, 0);
+
+    let mut table = HashMap::new();
+    table.insert(0, vec![0, 1, 2]);
+    table.insert(1, vec![4, 5, 6]);
+    table.insert(2, vec![3, 7]);
+
+    assert_eq!(
+        graph_with_sccs.tarjans_strongly_connected_components(),
+        (3, table)
     );
 }
