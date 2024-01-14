@@ -231,6 +231,82 @@ impl AdjacencyMatrixGraph {
         path.push(end);
         return Some(path);
     }
+
+    fn tarjans_strongly_connected_components(&self) -> (usize, Vec<Option<usize>>) {
+        let id = 0;
+        let count = &mut 0;
+        let mut ids = vec![None; self.size];
+        let mut low_links = vec![None; self.size];
+        let mut marked = vec![false; self.size];
+        let mut stack = Vec::new();
+
+        for u in 0..self.size {
+            if !marked[u] {
+                self._dfs_tarjan(
+                    u,
+                    id,
+                    count,
+                    &mut ids,
+                    &mut low_links,
+                    &mut marked,
+                    &mut stack,
+                );
+            }
+        }
+
+        return (*count, ids);
+    }
+
+    fn _dfs_tarjan(
+        &self,
+        u: usize,
+        mut id: usize,
+        count: &mut usize,
+        ids: &mut Vec<Option<usize>>,
+        low_links: &mut Vec<Option<usize>>,
+        marked: &mut Vec<bool>,
+        stack: &mut Vec<usize>,
+    ) {
+        low_links[u] = Some(id);
+        id += 1;
+
+        marked[u] = true;
+        stack.push(u);
+
+        let mut min_low_link = low_links[u].unwrap();
+
+        for v in 0..self.size {
+            if self.data[u][v].is_some() {
+                if !marked[v] {
+                    self._dfs_tarjan(v, id, count, ids, low_links, marked, stack);
+                }
+
+                if let Some(low_link) = low_links[v] {
+                    if low_link < min_low_link {
+                        min_low_link = low_link;
+                    }
+                }
+            }
+        }
+
+        if let Some(low_link) = low_links[u] {
+            if min_low_link < low_link {
+                low_links[u] = Some(min_low_link);
+                return;
+            }
+        }
+
+        while let Some(node) = stack.pop() {
+            ids[node] = Some(*count);
+            low_links[node] = Some(self.size);
+
+            if node == u {
+                break;
+            }
+        }
+
+        *count += 1;
+    }
 }
 
 fn main() {
@@ -273,4 +349,11 @@ fn main() {
     for path in &paths {
         println!("{:?}", path);
     }
+
+    // TODO: I have to test this one (?)
+    println!("Tarzan's Algorithm");
+    println!(
+        "{:?}",
+        another_graph.tarjans_strongly_connected_components()
+    );
 }
