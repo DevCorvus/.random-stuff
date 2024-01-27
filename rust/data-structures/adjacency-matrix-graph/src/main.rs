@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+mod tsp;
 
 struct AdjacencyMatrixGraph {
     data: Vec<Vec<Option<isize>>>,
@@ -356,4 +357,31 @@ fn main() {
         "{:?}",
         another_graph.tarjans_strongly_connected_components()
     );
+
+    println!("Traveling Salesman Problem");
+    // It's easier to just pass a hardcoded matrix instead of altering the current implementation
+    let mut distance_matrix = vec![vec![1000; 6]; 6];
+
+    distance_matrix[1][4] = 2;
+    distance_matrix[4][1] = 2;
+
+    distance_matrix[4][2] = 4;
+    distance_matrix[2][4] = 4;
+
+    distance_matrix[2][3] = 6;
+    distance_matrix[3][2] = 6;
+
+    distance_matrix[3][0] = 8;
+    distance_matrix[0][3] = 8;
+
+    distance_matrix[0][5] = 10;
+    distance_matrix[5][0] = 10;
+
+    distance_matrix[5][1] = 12;
+    distance_matrix[1][5] = 12;
+
+    let tsp = tsp::TravelingSalesmanRecursive::new(0, distance_matrix);
+
+    let tsp_result = tsp.solve();
+    println!("{:?}", tsp_result);
 }
