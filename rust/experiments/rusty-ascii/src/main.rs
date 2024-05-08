@@ -6,9 +6,15 @@ use image::{DynamicImage, GenericImageView, ImageFormat};
 use colored::*;
 
 const ASCII_CHARS: [char; 8] = [' ', '.', ',', '-', '~', '+', '=', '@'];
+const MAX_INTENSITY: u8 = 255;
 
 fn get_ascii_char(intensity: u8) -> char {
-    let index = intensity / 32;
+    let mut index = ((intensity as f64 / MAX_INTENSITY as f64) * ASCII_CHARS.len() as f64) as u8;
+
+    if intensity == MAX_INTENSITY {
+        index = ASCII_CHARS.len() as u8 - 1
+    }
+
     return ASCII_CHARS[index as usize];
 }
 
