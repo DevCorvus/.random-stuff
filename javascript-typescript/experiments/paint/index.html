@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    <script src="app.js" defer></script>
+</head>
+<style>
+    * {
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+    canvas {
+        border: 1px solid black;
+    }
+
+    .bar {
+        display: flex;
+        justify-items: center;
+    }
+</style>
+
+<body>
+    <div class="bar">
+        <input type="range" min="1" max="50" id="size" value="3">
+        <input type="color" id="colorpicker">
+        <button id="stroke">Stroke</button>
+        <button id="fill">Fill</button>
+        <button id="eraser">Eraser</button>
+        <button id="back">Back</button>
+        <button id="reset">Reset</button>
+        <button id="download">Download</button>
+    </div>
+    <canvas id="canvas"></canvas>
+</body>
+
+</html>
