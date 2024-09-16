@@ -21,6 +21,7 @@ zig-out
 
 # Python
 venv
+__pycache__
 
 # C/C++
 bin
