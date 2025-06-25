@@ -1,6 +1,8 @@
 use std::cmp::{min, Ordering};
 use std::collections::{BinaryHeap, HashMap, VecDeque};
 mod min_indexed_d_heap;
+mod union_find;
+mod unique_binary_heap;
 
 const DEPTH_TOKEN: isize = -1;
 
@@ -9,19 +11,11 @@ struct Edge {
     cost: isize,
 }
 
-// Priority Queue node for Dijkstra's algorithm
+// Priority Queue node for Dijkstra's algorithm and more
 #[derive(Eq, PartialEq)]
 struct Node {
     index: usize,
     cost: usize,
-}
-
-#[derive(Debug, PartialEq)]
-struct Bridge {
-    #[allow(unused)]
-    from: usize,
-    #[allow(unused)]
-    to: usize,
 }
 
 impl Ord for Node {
@@ -34,6 +28,52 @@ impl Ord for Node {
 }
 
 impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[derive(Debug, PartialEq)]
+struct Bridge {
+    #[allow(unused)]
+    from: usize,
+    #[allow(unused)]
+    to: usize,
+}
+
+#[derive(Eq, PartialEq, Hash, Clone)]
+struct BridgeEdge {
+    from: usize,
+    to: usize,
+    cost: usize,
+}
+
+impl BridgeEdge {
+    pub fn new(from: usize, to: usize, cost: usize) -> Self {
+        // This normalization ensures PartialEq is correctly derived
+        if from <= to {
+            Self { from, to, cost }
+        } else {
+            Self {
+                from: to,
+                to: from,
+                cost,
+            }
+        }
+    }
+}
+
+impl Ord for BridgeEdge {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other
+            .cost
+            .cmp(&self.cost)
+            .then_with(|| self.from.cmp(&other.from))
+            .then_with(|| self.to.cmp(&other.to))
+    }
+}
+
+impl PartialOrd for BridgeEdge {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -719,6 +759,65 @@ impl AdjacencyListGraph {
             }
         }
     }
+
+    fn prim(&self, start: usize) -> usize {
+        let mut mst_cost: usize = 0;
+        let mut min_edge_costs = vec![usize::MAX; self.size];
+        let mut visited = vec![false; self.size];
+
+        min_edge_costs[start] = 0;
+
+        let mut priority_queue = BinaryHeap::new(); // Priority Queue
+        priority_queue.push(Node {
+            index: start,
+            cost: 0,
+        });
+
+        while let Some(node) = priority_queue.pop() {
+            if visited[node.index] {
+                continue;
+            }
+
+            visited[node.index] = true;
+            mst_cost += node.cost;
+
+            if let Some(edges) = self.data.get(&node.index) {
+                for edge in edges {
+                    if !visited[edge.to] && (edge.cost as usize) < min_edge_costs[edge.to] {
+                        min_edge_costs[edge.to] = edge.cost as usize;
+                        priority_queue.push(Node {
+                            index: edge.to,
+                            cost: edge.cost as usize,
+                        });
+                    }
+                }
+            }
+        }
+
+        return mst_cost;
+    }
+
+    fn kruskal(&self) -> usize {
+        let mut mst_cost: usize = 0;
+
+        let mut priority_queue = unique_binary_heap::UniqueBinaryHeap::new();
+        let mut dsu = union_find::UnionFind::new(self.size); // Disjoint Set Union
+
+        for (from, edges) in &self.data {
+            for edge in edges {
+                priority_queue.push(BridgeEdge::new(*from, edge.to, edge.cost as usize));
+            }
+        }
+
+        while let Some(edge) = priority_queue.pop() {
+            if dsu.find(edge.from) != dsu.find(edge.to) {
+                dsu.union(edge.from, edge.to);
+                mst_cost += edge.cost;
+            }
+        }
+
+        return mst_cost;
+    }
 }
 
 fn main() {
@@ -858,4 +957,36 @@ fn main() {
         graph_with_sccs.tarjans_strongly_connected_components(),
         (3, table)
     );
+
+    let mut graph_for_prim = AdjacencyListGraph::new();
+
+    graph_for_prim.add_undirected_edge(0, 1, 2);
+    graph_for_prim.add_undirected_edge(0, 2, 3);
+    graph_for_prim.add_undirected_edge(0, 3, 3);
+    graph_for_prim.add_undirected_edge(1, 2, 4);
+    graph_for_prim.add_undirected_edge(1, 4, 3);
+    graph_for_prim.add_undirected_edge(2, 3, 5);
+    graph_for_prim.add_undirected_edge(2, 4, 1);
+    graph_for_prim.add_undirected_edge(2, 5, 6);
+    graph_for_prim.add_undirected_edge(3, 5, 7);
+    graph_for_prim.add_undirected_edge(4, 5, 8);
+    graph_for_prim.add_undirected_edge(5, 6, 9);
+
+    assert_eq!(graph_for_prim.prim(0), 24);
+
+    let mut graph_for_kruskal = AdjacencyListGraph::new();
+
+    graph_for_kruskal.add_undirected_edge(0, 1, 2);
+    graph_for_kruskal.add_undirected_edge(0, 2, 3);
+    graph_for_kruskal.add_undirected_edge(0, 3, 3);
+    graph_for_kruskal.add_undirected_edge(1, 2, 4);
+    graph_for_kruskal.add_undirected_edge(1, 4, 3);
+    graph_for_kruskal.add_undirected_edge(2, 3, 5);
+    graph_for_kruskal.add_undirected_edge(2, 4, 1);
+    // graph_for_kruskal.add_undirected_edge(2, 5, 6);
+    graph_for_kruskal.add_undirected_edge(3, 5, 7);
+    graph_for_kruskal.add_undirected_edge(4, 5, 8);
+    graph_for_kruskal.add_undirected_edge(5, 6, 9);
+
+    assert_eq!(graph_for_kruskal.kruskal(), 25);
 }
